@@ -1,0 +1,173 @@
+var grid;
+var fr = 3;
+var deadColor = (0);
+
+function setup() {
+  createCanvas(400, 400);
+  grid = new Grid(16);
+  grid.randomize();
+  frameRate(fr);
+}
+
+function draw() {
+  background(250);
+  grid.updateNeighborCounts();
+  grid.updatePopulation();
+  grid.draw();
+  textSize(15);
+  strokeWeight(4);
+  stroke("white");
+  text("Click Mouse to Refresh", 40, 40);
+  print("Honestly, the customization was the relatively easy part. The challenging part was the game itself. To do the customizations I just called upon the skills I picked up in Ramp 0, and referred to the p5.js reference page. Being an absolute beginner, all of these exercises have pushed myself out of my comfort zone. I would be happy to add this project to my portfolio, as it was among the first coding exercises I ever completed!");
+}
+
+class Grid {
+  constructor(cellSize) {
+    this.cellSize = cellSize;
+    this.numberOfColumns = width / cellSize;
+    this.numberOfRows = height / cellSize;
+
+    var x = this.numberOfColumns;
+    var y = this.numberOfRows;
+
+    this.cells = new Array(x);
+    for (var i = 0; i < this.numberOfColumns; i++) {
+      this.cells[i] = new Array(y);
+    }
+    
+    for (var column = 0; column < this.numberOfColumns; column++) {
+      for (var row = 0; row < this.numberOfRows; row++) {
+        this.cells[column][row] = new Cell(column, row, this.cellSize);
+      }
+    }
+    print(this.cells);
+
+  }
+
+  draw() {
+    for (var column = 0; column < this.numberOfColumns; column++) {
+      for (var row = 0; row < this.numberOfRows; row++) {
+        this.cells[column][row].draw();
+
+      }
+    }
+  }
+
+  updatePopulation() {
+    for (var column = 0; column < this.numberOfColumns; column++) {
+      for (var row = 0; row < this.numberOfRows; row++) {
+        this.cells[column][row].liveOrDie();
+      }
+    }
+  }
+
+  randomize() {
+    for (var column = 0; column < this.numberOfColumns; column++) {
+      for (var row = 0; row < this.numberOfRows; row++) {
+        this.cells[column][row].setIsAlive(floor(random(2)));
+      }
+    }
+  }
+  getNeighbors(currentCell) {
+    var neighbors = [];
+    for (var xOffset = -1; xOffset <= 1; xOffset++) {
+      for (var yOffset = -1; yOffset <= 1; yOffset++) {
+        var neighborColumn = currentCell.column + xOffset;
+        var neighborRow = currentCell.row + yOffset;
+
+        if (this.isValidPosition(neighborColumn, neighborRow)) {
+          if ((currentCell.column == neighborColumn) && (currentCell.row == neighborRow)) {
+
+          } else {
+            var cell = this.cells[neighborColumn][neighborRow];
+            neighbors.push(cell);
+          }
+        } // do something with neighborColumn and neighborRow
+      }
+    }
+    // add logic to get neighbors and add them to the array
+    return neighbors;
+  }
+  isValidPosition(column, row) {
+    return column >= 0 && row >= 0 && column < this.numberOfColumns && row < this.numberOfRows;
+    // add logic that checks if the column and row exist in the grid
+    // return true if they are valid and false if they are not
+  }
+  updateNeighborCounts() {
+    for (var column = 0; column < this.numberOfColumns; column++) {
+      for (var row = 0; row < this.numberOfRows; row++) {
+        var cell = this.cells[column][row];
+        var neighbors = this.getNeighbors(cell);
+        cell.liveNeighborCount = 0;
+        for (var i = 0; i < neighbors.length; i++) {
+          if (neighbors[i].isAlive) {
+            cell.liveNeighborCount += 1;
+
+          }
+        }
+
+      }
+    }
+    // for each cell in the grid
+    // reset it's neighbor count to 0
+    // get the cell's neighbors
+    // increase liveNeighborCount by 1 for each neighbor that is alive
+  }
+}
+
+
+class Cell {
+  constructor(column, row, size) {
+    this.column = column;
+    this.row = row;
+    this.size = size;
+    this.isAlive = false;
+    this.liveNeighborCount = 0;
+  }
+
+  draw() {
+
+    if (this.isAlive === true) {
+      fill(255,random(255),random(0));
+    } else {
+      fill(deadColor);
+    }
+
+    noStroke();
+    rect(this.column * this.size + 1, this.row * this.size + 1, this.size - 1, this.size - 1);
+
+  }
+  setIsAlive(value) {
+    if (value) {
+      this.isAlive = true;
+    } else {
+      this.isAlive = false;
+    }
+  }
+
+  liveOrDie() {
+
+
+
+
+    if (this.isAlive && this.liveNeighborCount < 2) { // underpoplation - death
+      this.isAlive = false;
+    } else if (this.isAlive && this.liveNeighborCount <= 3) { // stay alive, 2 or 3 neighbors - alive
+      this.isAlive = true;
+    } else if (this.isAlive && this.liveNeighborCount > 3) { // overpopulation - death
+      this.isAlive = false;
+    } else if (this.isAlive === false && this.liveNeighborCount == 3) { // birth - alive
+      this.isAlive = true;
+    }
+  }
+}
+
+function mousePressed() {
+  if (deadColor === 0) {
+     deadColor = 255;
+  } else {
+    deadColor = 0;
+  }
+
+  grid.randomize();
+}
